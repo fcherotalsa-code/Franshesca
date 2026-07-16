@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AgriTracer - Reporte Móvil</title>
+<style>
+  :root{
+    --teal:#0f8a7f; --teal-dark:#0b6a61; --bg-cyan:#e3f7f8;
+    --text:#1f2937; --muted:#6b7280; --border:#e2e5e9;
+    --danger:#c0392b; --page:#f4f6f7; --green:#3a9d5d;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--page);color:var(--text);}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+
+  /* login */
+  #screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ffffff 40%,#cdf3f5 100%);padding:20px;}
+  .login-box{width:100%;max-width:340px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);}
+  .login-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;margin-bottom:18px;}
+  .login-logo .ico{width:20px;height:20px;border:2px solid var(--teal);border-radius:5px;}
+  .login-box h1{font-size:19px;font-weight:600;margin:0 0 16px;text-align:center;}
+  .alert{background:#e8f2fc;border:1px solid #bcdcf7;color:#1f2937;font-size:12.5px;border-radius:6px;padding:9px 12px;margin-bottom:14px;}
+  .alert.error{background:#fdecea;border-color:#f3b6b0;color:#8a2c22;}
+  .login-field{position:relative;margin-bottom:12px;}
+  .login-field input{width:100%;height:44px;border:1px solid #d3d8dc;border-radius:8px;padding:0 40px 0 14px;font-size:15px;}
+  .login-field .eye{position:absolute;right:10px;top:11px;background:none;border:none;color:#9aa1a6;font-size:14px;}
+  .btn-ingresar{width:100%;background:var(--teal);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;margin-top:4px;}
+
+  /* app */
+  #screen-app{display:none;min-height:100vh;flex-direction:column;}
+  .topbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+  .topbar .logo{font-weight:700;font-size:16px;display:flex;align-items:center;gap:7px;}
+  .topbar .logo .ico{width:18px;height:18px;border:2px solid var(--teal);border-radius:4px;}
+  .btn-salir{background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12.5px;color:#374151;}
+
+  .content{padding:14px 14px 40px;flex:1;}
+  .card-summary{background:var(--bg-cyan);border-radius:10px;padding:14px;margin-bottom:14px;}
+  .card-summary .row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+  .card-summary .row b{font-weight:700;}
+  .week-label{font-weight:600;color:var(--teal-dark);font-size:12.5px;margin-bottom:8px;}
+
+  .filters{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .filters select{width:100%;height:38px;border:1px solid #cfd6db;border-radius:7px;padding:0 10px;font-size:13.5px;background:#fff;}
+  .filters label{font-size:11.5px;font-weight:600;color:#374151;margin-bottom:3px;display:block;}
+
+  .toolbar{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .toolbar label{display:flex;align-items:center;gap:7px;font-size:13px;}
+  .btn-aprobar-todo{background:var(--green);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13.5px;font-weight:600;}
+
+  .row-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .row-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .row-card .title{font-size:14px;font-weight:600;}
+  .row-card .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .row-card .dias{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:6px;margin-top:10px;}
+  .row-card .dia{background:#f4f6f7;border-radius:6px;padding:5px 4px;text-align:center;}
+  .row-card .dia .lbl{font-size:10px;color:var(--muted);}
+  .row-card .dia .val{font-size:12.5px;font-weight:600;}
+  .row-card .total{margin-top:8px;font-size:13px;font-weight:700;}
+  .btn-aprobar{margin-top:10px;width:100%;padding:9px;border-radius:7px;font-size:13px;font-weight:600;border:1px solid #cfd6db;background:#fff;color:#374151;}
+  .btn-aprobar.on{background:var(--green);border-color:var(--green);color:#fff;}
+  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:40px 20px;}
+</style>
+</head>
+<body>
+
+<div id="screen-login">
+  <div class="login-box">
+    <div class="login-logo"><span class="ico"></span>AgriTracer</div>
+    <h1>Reporte Semanal (Móvil)</h1>
+    <div class="alert" id="loginAlert">Ingresa tu usuario y contraseña.</div>
+    <div class="login-field"><input type="text" id="loginUser" placeholder="Usuario"></div>
+    <div class="login-field"><input type="password" id="loginPass" placeholder="Contraseña"><button class="eye" onclick="togglePass()">&#128065;</button></div>
+    <button class="btn-ingresar" onclick="doLogin()">Ingresar</button>
+  </div>
+</div>
+
+<div id="screen-app">
+  <div class="topbar">
+    <div class="logo"><span class="ico"></span>AgriTracer</div>
+    <button class="btn-salir" onclick="logout()">Salir</button>
+  </div>
+  <div class="content">
+    <div class="week-label" id="semanaLabel"></div>
+    <div class="card-summary" id="resumenBox"></div>
+
+    <div class="filters">
+      <div><label>Campo</label><select id="fCampo" onchange="setF('campo',this.value)"></select></div>
+      <div><label>Especie</label><select id="fEspecie" onchange="setF('especie',this.value)"></select></div>
+      <div><label>Cuartel</label><select id="fCuartel" onchange="setF('cuartel',this.value)"></select></div>
+      <div><label>Variedad</label><select id="fVariedad" onchange="setF('variedad',this.value)"></select></div>
+    </div>
+
+    <div class="toolbar">
+      <label><input type="checkbox" id="chkSoloAprobados" onchange="setSolo(this.checked)"> Ver solo aprobados (lo que verá Power BI)</label>
+      <button class="btn-aprobar-todo" onclick="aprobarTodoFiltrado()">&#10003; Aprobar todo lo filtrado</button>
+    </div>
+
+    <div id="cardsWrap"></div>
+  </div>
+</div>
+
+<script>
+var USERS = {"mguzman":"Talsa2026"};
+function togglePass(){ var p=document.getElementById('loginPass'); p.type = p.type==='password' ? 'text':'password'; }
+function doLogin(){
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  var alertBox = document.getElementById('loginAlert');
+  if(USERS[u] && USERS[u]===p){
+    document.getElementById('screen-login').style.display='none';
+    document.getElementById('screen-app').style.display='flex';
+    init();
+  } else {
+    alertBox.className='alert error';
+    alertBox.innerText='Usuario o contraseña incorrectos.';
+  }
+}
+function logout(){
+  document.getElementById('screen-app').style.display='none';
+  document.getElementById('screen-login').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+var REPORT_DATA = [], DAY_COLS = [];
+var rst = {campo:"Todos",especie:"Todos",cuartel:"Todos",variedad:"Todos",soloAprobados:false};
+
+function cargarDatos(){
+  try{
+    var saved = localStorage.getItem('agritracer_report_data');
+    if(saved){ var p = JSON.parse(saved); REPORT_DATA = p.rows||[]; DAY_COLS = p.days||[]; }
+  }catch(e){ REPORT_DATA=[]; DAY_COLS=[]; }
+}
+function guardarDatos(){
+  try{ localStorage.setItem('agritracer_report_data', JSON.stringify({rows:REPORT_DATA, days:DAY_COLS})); }catch(e){}
+}
+function toggleAprobado(id){
+  var r = REPORT_DATA.filter(function(x){return x.id===id;})[0];
+  if(r){ r.aprobado=!r.aprobado; guardarDatos(); render(); }
+}
+function aprobarTodoFiltrado(){
+  scopeFiltrado().forEach(function(r){ r.aprobado=true; });
+  guardarDatos(); render();
+}
+function setF(field,v){ rst[field]=v; render(); }
+function setSolo(v){ rst.soloAprobados=v; render(); }
+
+function opciones(field){
+  var scope = REPORT_DATA.filter(function(r){
+    if(field!=='campo' && rst.campo!=="Todos" && r.campo!==rst.campo) return false;
+    return true;
+  });
+  var a=[]; scope.forEach(function(r){ var v=r[field]; if(v && a.indexOf(v)<0) a.push(v); }); return a;
+}
+function scopeFiltrado(){
+  return REPORT_DATA.filter(function(r){
+    if(rst.campo!=="Todos" && r.campo!==rst.campo) return false;
+    if(rst.especie!=="Todos" && r.especie!==rst.especie) return false;
+    if(rst.cuartel!=="Todos" && r.cuartel!==rst.cuartel) return false;
+    if(rst.variedad!=="Todos" && r.variedad!==rst.variedad) return false;
+    return true;
+  });
+}
+function isoWeekNumber(d){
+  var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  var yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date-yearStart)/86400000)+1)/7);
+}
+function fmtNum(n){ return n.toLocaleString('es-PE',{maximumFractionDigits:1}); }
+
+function renderSelect(id, field, current){
+  var el = document.getElementById(id);
+  var opts = field==='campo' ? (function(){ var a=[]; REPORT_DATA.forEach(function(r){ if(r.campo && a.indexOf(r.campo)<0) a.push(r.campo); }); return a; })() : opciones(field);
+  var h = "<option value='Todos'"+(current==="Todos"?" selected":"")+">--Todos--</option>";
+  opts.forEach(function(o){ h += "<option value='"+o+"'"+(current===o?" selected":"")+">"+o+"</option>"; });
+  el.innerHTML = h;
+}
+
+function render(){
+  document.getElementById('semanaLabel').innerText = "Semana "+isoWeekNumber(new Date())+" del "+new Date().getFullYear();
+  renderSelect('fCampo','campo',rst.campo);
+  renderSelect('fEspecie','especie',rst.especie);
+  renderSelect('fCuartel','cuartel',rst.cuartel);
+  renderSelect('fVariedad','variedad',rst.variedad);
+
+  var scope = scopeFiltrado();
+  var filtered = scope.filter(function(r){ return !rst.soloAprobados || r.aprobado; });
+  var totalSemana = filtered.reduce(function(s,r){return s+r.totalSemana;},0);
+  var nAprob = scope.filter(function(r){return r.aprobado;}).length;
+  var nPend = scope.length - nAprob;
+
+  var resumen = "<div class='row'><span>Total Kg semana</span><b>"+fmtNum(totalSemana)+"</b></div>";
+  DAY_COLS.forEach(function(d){
+    var t = filtered.reduce(function(s,r){ return s+(r.dias[d]||0); },0);
+    resumen += "<div class='row'><span>"+d+"</span><b>"+fmtNum(t)+"</b></div>";
+  });
+  resumen += "<div class='row' style='color:#1f6b3d'><span>Aprobadas</span><b>"+nAprob+"</b></div>";
+  resumen += "<div class='row' style='color:#8a5d00'><span>Pendientes</span><b>"+nPend+"</b></div>";
+  document.getElementById('resumenBox').innerHTML = resumen;
+
+  var wrap = document.getElementById('cardsWrap');
+  if(REPORT_DATA.length===0){
+    wrap.innerHTML = "<div class='empty'>Aún no hay datos importados.<br>Impórtalos primero desde la versión de escritorio en <b>Reportes &rarr; Importar Datos</b>.</div>";
+    return;
+  }
+  if(filtered.length===0){
+    wrap.innerHTML = "<div class='empty'>No hay filas que coincidan con el filtro.</div>";
+    return;
+  }
+  var html = "";
+  filtered.forEach(function(r){
+    html += "<div class='row-card'>";
+    html += "<div class='top'><div><div class='title'>"+r.campo+" &middot; "+r.cuartel+"</div><div class='sub'>"+r.especie+" &middot; "+r.variedad+"</div></div></div>";
+    html += "<div class='dias'>";
+    DAY_COLS.forEach(function(d){ var v=r.dias[d]||0; html += "<div class='dia'><div class='lbl'>"+d+"</div><div class='val'>"+(v?fmtNum(v):"-")+"</div></div>"; });
+    html += "</div>";
+    html += "<div class='total'>Total semana: "+fmtNum(r.totalSemana)+" kg</div>";
+    html += "<button class='btn-aprobar"+(r.aprobado?" on":"")+"' onclick='toggleAprobado("+r.id+")'>"+(r.aprobado?"&#10003; Aprobado":"Marcar como Aprobado")+"</button>";
+    html += "</div>";
+  });
+  wrap.innerHTML = html;
+}
+
+function init(){ cargarDatos(); render(); }
+</script>
+</body>
+</html>
